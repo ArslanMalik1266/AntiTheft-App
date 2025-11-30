@@ -1,6 +1,7 @@
 package com.example.antitheftapp.ui
 
 import android.content.Context
+import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -14,14 +15,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.antitheftapp.R
+import com.example.antitheftapp.service.AntiTheftService
 import java.util.Objects
 
 class HomeScreen : AppCompatActivity() {
 
     private lateinit var btnArm : Button
     private var isArmed = false
-    private lateinit var sensorManager: SensorManager
-    private var proximitySensor : Sensor? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,43 +36,18 @@ class HomeScreen : AppCompatActivity() {
 
         btnArm = findViewById(R.id.btnArm)
 
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
-
-
 
         btnArm.setOnClickListener {
             if (isArmed){
                 isArmed = false
                 btnArm.text = "START"
-                sensorManager.unregisterListener(proximityListener)
+              stopService(Intent(this, AntiTheftService::class.java))
             }else {
                 isArmed = true
                 btnArm.text = "STOP"
-                sensorManager.registerListener(
-                    proximityListener,
-                    proximitySensor,
-                    SensorManager.SENSOR_DELAY_NORMAL
-                )
+              startForegroundService(Intent(this, AntiTheftService::class.java))
             }
         }
     }
 
-    private val proximityListener = object : SensorEventListener{
-        override fun onSensorChanged(event: SensorEvent) {
-            if (!isArmed) return
-            val value = event.values[0]
-            val max = proximitySensor?.maximumRange ?: 2f
-
-            if (value>= max){
-                Log.d("TAG", "Phone Snatched")
-            }else{
-                Log.d("TAG", "Phone still in pocket")
-            }
-        }
-
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        }
-
-    }
 }
